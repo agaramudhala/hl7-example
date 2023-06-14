@@ -1,0 +1,37 @@
+import ca.uhn.hl7v2.DefaultHapiContext;
+import ca.uhn.hl7v2.HapiContext;
+import ca.uhn.hl7v2.model.Message;
+import ca.uhn.hl7v2.parser.EncodingNotSupportedException;
+import ca.uhn.hl7v2.parser.Parser;
+
+public class HapiHL7ParserExample {
+
+    public static void main(String[] args) {
+        // Create a new HapiContext
+        HapiContext context = new DefaultHapiContext();
+
+        // Create a new parser instance
+        Parser parser = context.getGenericParser();
+
+        // Sample HL7 message
+        String hl7Message = "MSH|^~\\&|SENDING_APP|SENDING_FACILITY|RECEIVING_APP|RECEIVING_FACILITY|20230209153025||ADT^A08|MSGID123456789|P|2.5|||";
+
+        try {
+            // Parse the HL7 message
+            Message hl7ParsedMessage = parser.parse(hl7Message);
+
+            // Access fields in the parsed message
+            String messageType = hl7ParsedMessage.getName();
+            String sendingApplication = hl7ParsedMessage.get("MSH-3").getValue();
+            String receivingApplication = hl7ParsedMessage.get("MSH-5").getValue();
+
+            // Print the parsed fields
+            System.out.println("Message Type: " + messageType);
+            System.out.println("Sending Application: " + sendingApplication);
+            System.out.println("Receiving Application: " + receivingApplication);
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+}
