@@ -1,0 +1,30 @@
+import ca.uhn.fhir.context.FhirContext;
+import ca.uhn.fhir.parser.IParser;
+import org.hl7.fhir.instance.model.api.IBaseResource;
+
+public class HL7ParserExample {
+
+    public static void main(String[] args) {
+        // Create a new FhirContext
+        FhirContext fhirContext = FhirContext.forR4();
+
+        // Create a new parser instance
+        IParser parser = fhirContext.newJsonParser();
+
+        // Sample HL7 message
+        String hl7Message = "MSH|^~\\&|SENDING_APP|SENDING_FACILITY|RECEIVING_APP|RECEIVING_FACILITY|20230209153025||ADT^A08|MSGID123456789|P|2.5|||";
+
+        try {
+            // Parse the HL7 message into FHIR resources
+            IBaseResource fhirResource = fhirContext.newHapiParser().parseResource(hl7Message);
+
+            // Convert the FHIR resource to JSON
+            String fhirJson = parser.encodeResourceToString(fhirResource);
+
+            // Print the parsed FHIR JSON
+            System.out.println(fhirJson);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+}
