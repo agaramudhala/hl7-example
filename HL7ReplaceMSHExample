@@ -1,0 +1,35 @@
+public class HL7ReplaceMSHExample {
+
+    public static void main(String[] args) {
+        String hl7Message = "MSH|^~\\&|OLD_SENDER|OLD_FACILITY|OLD_RECEIVER|OLD_FACILITY|20230209153025||ADT^A08|MSGID123456789|P|2.5|||";
+        String newSender = "NEW_SENDER";
+        String newFacility = "NEW_FACILITY";
+        String newReceiver = "NEW_RECEIVER";
+        String newMessage = replaceMSHSegment(hl7Message, newSender, newFacility, newReceiver);
+        System.out.println(newMessage);
+    }
+
+    private static String replaceMSHSegment(String hl7Message, String newSender, String newFacility, String newReceiver) {
+        String[] segments = hl7Message.split("\r");
+        StringBuilder builder = new StringBuilder();
+        
+        for (String segment : segments) {
+            if (segment.startsWith("MSH")) {
+                String[] fields = segment.split("\\|", -1);
+                
+                // Replace the desired fields
+                fields[3] = newSender;
+                fields[4] = newFacility;
+                fields[5] = newReceiver;
+                
+                // Reconstruct the MSH segment
+                String newMSHSegment = String.join("|", fields);
+                builder.append(newMSHSegment).append("\r");
+            } else {
+                builder.append(segment).append("\r");
+            }
+        }
+        
+        return builder.toString();
+    }
+}
