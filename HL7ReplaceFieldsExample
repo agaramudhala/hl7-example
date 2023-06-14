@@ -1,0 +1,44 @@
+public class HL7ReplaceFieldsExample {
+
+    public static void main(String[] args) {
+        String hl7Message = "MSH|^~\\&|OLD_SENDER|OLD_FACILITY|OLD_RECEIVER|OLD_FACILITY|20230209153025||ADT^A08|MSGID123456789|P|2.5|||PID|1|PATIENT_ID|OLD_LAST_NAME|OLD_FIRST_NAME|OLD_MIDDLE_NAME";
+        String newMSH10Value = "NEW_MSG_CONTROL_ID";
+        String newPID5Value = "NEW_LAST_NAME";
+
+        String newMessage = replaceFields(hl7Message, newMSH10Value, newPID5Value);
+        System.out.println(newMessage);
+    }
+
+    private static String replaceFields(String hl7Message, String newMSH10Value, String newPID5Value) {
+        String[] segments = hl7Message.split("\r");
+        StringBuilder builder = new StringBuilder();
+
+        for (String segment : segments) {
+            String segmentType = segment.substring(0, 3);
+
+            if (segmentType.equals("MSH")) {
+                String[] fields = segment.split("\\|", -1);
+
+                // Replace MSH-10 field
+                fields[9] = newMSH10Value;
+                
+                // Reconstruct the MSH segment
+                String newMSHSegment = String.join("|", fields);
+                builder.append(newMSHSegment).append("\r");
+            } else if (segmentType.equals("PID")) {
+                String[] fields = segment.split("\\|", -1);
+
+                // Replace PID-5 field
+                fields[5] = newPID5Value;
+
+                // Reconstruct the PID segment
+                String newPIDSegment = String.join("|", fields);
+                builder.append(newPIDSegment).append("\r");
+            } else {
+                builder.append(segment).append("\r");
+            }
+        }
+
+        return builder.toString();
+    }
+}
