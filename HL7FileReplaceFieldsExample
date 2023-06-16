@@ -7,7 +7,7 @@ import java.io.IOException;
 public class HL7FileReplaceFieldsExample {
 
     public static void main(String[] args) {
-        String filePath = "/Users/bs/IdeaProjects/samle/src/main/java/org/example/ex.hl7";
+        String filePath = "/IdeaProjects/samle/src/main/java/org/example/ex.hl7";
 
         // Read the HL7 file
         String hl7Message = readHL7File(filePath);
