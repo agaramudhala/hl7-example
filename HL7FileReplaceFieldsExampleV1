@@ -1,0 +1,107 @@
+package org.example;
+
+
+import java.io.BufferedReader;
+import java.io.FileReader;
+import java.io.IOException;
+
+    public class HL7FileReplaceFieldsExampleV1 {
+
+        public static void main(String[] args) {
+            String filePath = "/Users/bs/IdeaProjects/samle/src/main/java/org/example/ex.hl7";
+
+            // Read the HL7 file
+            String hl7Message = readHL7File(filePath);
+
+            if (hl7Message != null) {
+                // Print the original message
+                System.out.println("Original HL7 message:");
+                System.out.println(hl7Message);
+                System.out.println();
+
+                // Replacements
+                String newMSH7Value = "NEW_MESSAGE_TYPE";
+                String newMSH10Value = "NEW_MSG_CONTROL_ID";
+                String newEVN2Value = "NEW_EVENT_TYPE";
+                String newPID5Value = "NEW_LAST_NAME";
+                String newPID7Value = "NEW_DOB";
+                String newPID8Value = "NEW_GENDER";
+                String newPID11Value = "NEW_ADDRESS";
+                String newPID18Value = "NEW_ACCOUNT_NUMBER";
+
+                // Replace fields
+                String newMessage = replaceFields(hl7Message, newMSH7Value, newMSH10Value, newEVN2Value, newPID5Value, newPID7Value, newPID8Value, newPID11Value, newPID18Value);
+
+                // Print the modified message
+                System.out.println("Modified HL7 message:");
+                System.out.println(newMessage);
+            } else {
+                System.out.println("Failed to read the HL7 file.");
+            }
+        }
+
+        private static String readHL7File(String filePath) {
+            StringBuilder builder = new StringBuilder();
+
+            try (BufferedReader reader = new BufferedReader(new FileReader(filePath))) {
+                String line;
+                while ((line = reader.readLine()) != null) {
+                    builder.append(line).append("\r");
+                }
+            } catch (IOException e) {
+                e.printStackTrace();
+                return null;
+            }
+
+            return builder.toString();
+        }
+
+        private static String replaceFields(String hl7Message, String newMSH7Value, String newMSH10Value, String newEVN2Value, String newPID5Value,
+                                            String newPID7Value, String newPID8Value, String newPID11Value, String newPID18Value) {
+            String[] segments = hl7Message.split("\r");
+            StringBuilder builder = new StringBuilder();
+
+            for (String segment : segments) {
+                String segmentType = segment.substring(0, 3);
+
+                if (segmentType.equals("MSH")) {
+                    String[] fields = segment.split("\\|", -1);
+
+                    // Replace MSH-7 and MSH-10 fields
+                    fields[6] = newMSH7Value;
+                    fields[9] = newMSH10Value;
+
+                    // Reconstruct the MSH segment
+                    String newMSHSegment = String.join("|", fields);
+                    builder.append(newMSHSegment).append("\r");
+                } else if (segmentType.equals("EVN")) {
+                    String[] fields = segment.split("\\|", -1);
+
+                    // Replace EVN-2 field
+                    fields[1] = newEVN2Value;
+
+                    // Reconstruct the EVN segment
+                    String newEVNSegment = String.join("|", fields);
+                    builder.append(newEVNSegment).append("\r");
+                } else if (segmentType.equals("PID")) {
+                    String[] fields = segment.split("\\|", -1);
+
+                    // Replace PID-5, PID-7, PID-8, PID-11, and PID-18 fields
+                    fields[4] = newPID5Value;
+                    fields[6] = newPID7Value;
+                    fields[7] = newPID8Value;
+                    fields[10] = newPID11Value;
+                    fields[17] = newPID18Value;
+
+                    // Reconstruct the PID segment
+                    String newPIDSegment = String.join("|", fields);
+                    builder.append(newPIDSegment).append("\r");
+                } else {
+                    builder.append(segment).append("\r");
+                }
+            }
+
+            return builder.toString();
+        }
+    }
+
