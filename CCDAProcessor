@@ -1,0 +1,47 @@
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
+public class CCDAProcessor {
+    public static void main(String[] args) {
+        // Sample CCDA message
+        String ccdaMessage = "<ClinicalDocument>\n" +
+                "  <patientID>PATIENT_ID</patientID>\n" +
+                "  <dob>DOB</dob>\n" +
+                "</ClinicalDocument>";
+
+        // Print original CCDA message
+        System.out.println("Original CCDA message:");
+        System.out.println(ccdaMessage);
+
+        // Replace patient ID and DOB
+        String updatedCCDA = replacePatientInfo(ccdaMessage, "12345", "2000-01-01");
+
+        // Print updated CCDA message
+        System.out.println("\nUpdated CCDA message:");
+        System.out.println(updatedCCDA);
+    }
+
+    public static String replacePatientInfo(String ccdaMessage, String newPatientId, String newDOB) {
+        // Regular expression patterns for patient ID and DOB tags
+        String patientIdPattern = "<patientID>(.*?)</patientID>";
+        String dobPattern = "<dob>(.*?)</dob>";
+
+        // Create pattern objects
+        Pattern patientIdPatternObj = Pattern.compile(patientIdPattern);
+        Pattern dobPatternObj = Pattern.compile(dobPattern);
+
+        // Match and replace patient ID
+        Matcher patientIdMatcher = patientIdPatternObj.matcher(ccdaMessage);
+        if (patientIdMatcher.find()) {
+            ccdaMessage = ccdaMessage.replace(patientIdMatcher.group(1), newPatientId);
+        }
+
+        // Match and replace DOB
+        Matcher dobMatcher = dobPatternObj.matcher(ccdaMessage);
+        if (dobMatcher.find()) {
+            ccdaMessage = ccdaMessage.replace(dobMatcher.group(1), newDOB);
+        }
+
+        return ccdaMessage;
+    }
+}
