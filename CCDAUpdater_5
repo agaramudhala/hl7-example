@@ -1,0 +1,72 @@
+package org.example;
+
+import org.w3c.dom.Document;
+import org.w3c.dom.NodeList;
+import org.xml.sax.SAXException;
+
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.parsers.ParserConfigurationException;
+import javax.xml.transform.TransformerConfigurationException;
+import javax.xml.transform.TransformerException;
+import javax.xml.xpath.*;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+
+public class CCDAUpdater_5 {
+    public static void main(String[] args) {
+        try {
+            // Load the CCDA file
+            File ccdaFile = new File("src/main/java/org/example/ccda.xml");
+            DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
+            DocumentBuilder builder = factory.newDocumentBuilder();
+            Document doc = builder.parse(ccdaFile);
+
+            // Create an XPath expression
+            XPathFactory xpathFactory = XPathFactory.newInstance();
+            XPath xpath = xpathFactory.newXPath();
+
+            // Update the Patient ID
+            String newPatientId = "NEW_PATIENT_ID";
+            updateNodeValue(doc, xpath, "/ClinicalDocument/recordTarget/patientRole/id/@extension", newPatientId);
+
+            // Update the Patient given name
+            String newGivenName = "NEW_GIVEN_NAME";
+            updateNodeValue(doc, xpath, "/ClinicalDocument/recordTarget/patientRole/patient/name[1]/given[1]", newGivenName);
+
+            // Update the Patient last name
+            String newLastName = "NEW_LAST_NAME";
+            updateNodeValue(doc, xpath, "/ClinicalDocument/recordTarget/patientRole/patient/name[1]/family[1]", newLastName);
+
+            // Update the Date of birth
+            String newDob = "NEW_DATE_OF_BIRTH";
+            updateNodeValue(doc, xpath, "/ClinicalDocument/recordTarget/patientRole/patient/birthTime", newDob);
+
+            // Save the updated file
+            saveUpdatedFile(doc, ccdaFile);
+            System.out.println("Updated CCDA file saved successfully.");
+        } catch (ParserConfigurationException | SAXException | IOException | XPathExpressionException |
+                 TransformerConfigurationException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private static void updateNodeValue(Document doc, XPath xpath, String expression, String newValue) throws XPathExpressionException {
+        XPathExpression expr = xpath.compile(expression);
+        NodeList nodes = (NodeList) expr.evaluate(doc, XPathConstants.NODESET);
+        for (int i = 0; i < nodes.getLength(); i++) {
+            nodes.item(i).setTextContent(newValue);
+        }
+    }
+
+    private static void saveUpdatedFile(Document doc, File file) throws IOException, TransformerConfigurationException {
+        try (FileOutputStream fos = new FileOutputStream(file)) {
+            javax.xml.transform.TransformerFactory tf = javax.xml.transform.TransformerFactory.newInstance();
+            javax.xml.transform.Transformer transformer = tf.newTransformer();doc.setXmlStandalone(true);
+            transformer.transform(new javax.xml.transform.dom.DOMSource(doc), new javax.xml.transform.stream.StreamResult(fos));
+        } catch (TransformerException e) {
+            throw new RuntimeException(e);
+        }
+    }
+}
