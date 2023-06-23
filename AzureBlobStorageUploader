@@ -1,0 +1,36 @@
+import com.azure.storage.blob.BlobClient;
+import com.azure.storage.blob.BlobContainerClient;
+import com.azure.storage.blob.BlobServiceClient;
+import com.azure.storage.blob.BlobServiceClientBuilder;
+
+import java.io.File;
+
+public class AzureBlobStorageUploader {
+    public static void main(String[] args) {
+        // Azure Blob Storage connection string
+        String connectionString = "your_connection_string";
+
+        // Name of the container where you want to upload the file
+        String containerName = "your_container_name";
+
+        // Path of the local zip file to upload
+        String localFilePath = "path_to_local_zip_file.zip";
+
+        // Name of the file in Azure Blob Storage
+        String blobName = "name_of_the_blob.zip";
+
+        // Create a BlobServiceClient using the connection string
+        BlobServiceClient blobServiceClient = new BlobServiceClientBuilder().connectionString(connectionString).buildClient();
+
+        // Get a reference to the container
+        BlobContainerClient containerClient = blobServiceClient.getBlobContainerClient(containerName);
+
+        // Get a reference to the blob
+        BlobClient blobClient = containerClient.getBlobClient(blobName);
+
+        // Upload the file to Azure Blob Storage
+        blobClient.uploadFromFile(localFilePath);
+
+        System.out.println("File uploaded successfully.");
+    }
+}
