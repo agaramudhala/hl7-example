@@ -1,0 +1,147 @@
+package org.example.zipfileccda;
+
+
+import org.w3c.dom.Document;
+import org.w3c.dom.Node;
+import org.xml.sax.SAXException;
+
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.parsers.ParserConfigurationException;
+import javax.xml.transform.OutputKeys;
+import javax.xml.transform.Transformer;
+import javax.xml.transform.TransformerException;
+import javax.xml.transform.TransformerFactory;
+import javax.xml.transform.dom.DOMSource;
+import javax.xml.transform.stream.StreamResult;
+import javax.xml.xpath.*;
+import java.io.*;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipInputStream;
+import java.util.zip.ZipOutputStream;
+
+public class ZipFileCCDAUpdater {
+        public static void main(String[] args) {
+            String zipFilePath = "src/main/java/org/example/ccdazip.zip"; // Specify the path to your zipped folder
+            String ccdaFileName = "ccda.xml"; // Specify the name of the CCDA XML file inside the zipped folder
+
+            try {
+                // Unzip the CCDA file
+                String unzipFolderPath = unzipFolder(zipFilePath);
+
+                // Read the XML file
+                String ccdaFilePath = unzipFolderPath + File.separator + ccdaFileName;
+                Document document = readXMLFile(ccdaFilePath);
+
+                // Update and print the requested values
+                String documentIdExtension = updateAndGetElementValue(document, "/ClinicalDocument/id/@extension");
+                String documentIdRoot = getElementValue(document, "/ClinicalDocument/id/@root");
+                String patientId = updateAndGetElementValue(document, "/ClinicalDocument/recordTarget/patientRole/id/@extension");
+                String patientGivenName = updateAndGetElementValue(document, "/ClinicalDocument/recordTarget/patientRole/patient/name[1]/given[1]");
+                String patientLastName = updateAndGetElementValue(document, "/ClinicalDocument/recordTarget/patientRole/patient/name[1]/family[1]");
+                String dateOfBirth = updateAndGetElementValue(document, "/ClinicalDocument/recordTarget/patientRole/patient/birthTime");
+
+                // Save the updated XML
+                saveUpdatedXML(document, ccdaFilePath);
+
+                // Zip the CCDA file
+                String updatedZipFilePath = zipFolder(unzipFolderPath, zipFilePath);
+
+                // Print the updated values
+                System.out.println("Document ID extension: " + documentIdExtension);
+                System.out.println("Document ID root: " + documentIdRoot);
+                System.out.println("Patient ID: " + patientId);
+                System.out.println("Patient given name: " + patientGivenName);
+                System.out.println("Patient last name: " + patientLastName);
+                System.out.println("Date of birth: " + dateOfBirth);
+
+                System.out.println("CCDA file has been updated, zipped, and values have been printed successfully.");
+                System.out.println("Updated CCDA zip file path: " + updatedZipFilePath);
+            } catch (IOException | ParserConfigurationException | SAXException | TransformerException | XPathExpressionException e) {
+                e.printStackTrace();
+            }
+        }
+
+        private static String unzipFolder(String zipFilePath) throws IOException {
+            String destinationFolderPath = zipFilePath.substring(0, zipFilePath.lastIndexOf('.'));
+            try (ZipInputStream zipInputStream = new ZipInputStream(new FileInputStream(zipFilePath))) {
+                byte[] buffer = new byte[1024];
+                ZipEntry zipEntry = zipInputStream.getNextEntry();
+                while (zipEntry != null) {
+                    String entryFileName = zipEntry.getName();
+                    String entryFilePath = destinationFolderPath + File.separator + entryFileName;
+                    if (zipEntry.isDirectory()) {
+                        Files.createDirectories(Paths.get(entryFilePath));
+                    } else {
+                        try (FileOutputStream fileOutputStream = new FileOutputStream(entryFilePath)) {
+                            int length;
+                            while ((length = zipInputStream.read(buffer)) > 0) {
+                                fileOutputStream.write(buffer, 0, length);
+                            }
+                        }
+                    }
+                    zipEntry = zipInputStream.getNextEntry();
+                }
+            }
+            return destinationFolderPath;
+        }
+
+        private static Document readXMLFile(String filePath) throws IOException, ParserConfigurationException, SAXException {
+            DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
+            DocumentBuilder builder = factory.newDocumentBuilder();
+            return builder.parse(new File(filePath));
+        }
+
+        private static String getElementValue(Document document, String xpathExpression) throws XPathExpressionException {
+            XPathFactory xPathFactory = XPathFactory.newInstance();
+            XPath xpath = xPathFactory.newXPath();
+            XPathExpression expression = xpath.compile(xpathExpression);
+            return expression.evaluate(document);
+        }
+
+        private static String updateAndGetElementValue(Document document, String xpathExpression) throws XPathExpressionException {
+            XPathFactory xPathFactory = XPathFactory.newInstance();
+            XPath xpath = xPathFactory.newXPath();
+            XPathExpression expression = xpath.compile(xpathExpression);
+            Node node = (Node) expression.evaluate(document, XPathConstants.NODE);
+            String currentValue = node.getNodeValue();
+            String updatedValue = "Updated: " + currentValue; // Modify the value as needed
+            node.setNodeValue(updatedValue);
+            return updatedValue;
+        }
+
+        private static void saveUpdatedXML(Document document, String filePath) throws TransformerException {
+            TransformerFactory transformerFactory = TransformerFactory.newInstance();
+            Transformer transformer = transformerFactory.newTransformer();
+            transformer.setOutputProperty(OutputKeys.INDENT, "yes");
+
+            DOMSource source = new DOMSource(document);
+            StreamResult result = new StreamResult(new File(filePath));
+            transformer.transform(source, result);
+        }
+
+        private static String zipFolder(String sourceFolderPath, String zipFilePath) throws IOException {
+            try (FileOutputStream fileOutputStream = new FileOutputStream(zipFilePath);
+                 ZipOutputStream zipOutputStream = new ZipOutputStream(fileOutputStream);
+                 BufferedOutputStream bufferedOutputStream = new BufferedOutputStream(zipOutputStream)) {
+                Path sourceFolderPathPath = Paths.get(sourceFolderPath);
+                Files.walk(sourceFolderPathPath)
+                        .filter(path -> !Files.isDirectory(path))
+                        .forEach(path -> {
+                            ZipEntry zipEntry = new ZipEntry(sourceFolderPathPath.relativize(path).toString());
+                            try {
+                                zipOutputStream.putNextEntry(zipEntry);
+                                byte[] bytes = Files.readAllBytes(path);
+                                zipOutputStream.write(bytes, 0, bytes.length);
+                                zipOutputStream.closeEntry();
+                            } catch (IOException e) {
+                                e.printStackTrace();
+                            }
+                        });
+            }
+            return zipFilePath;
+        }
+    }
