@@ -1,0 +1,59 @@
+package org.example.ccda;
+
+import org.w3c.dom.*;
+import javax.xml.parsers.*;
+import javax.xml.transform.*;
+import javax.xml.transform.dom.DOMSource;
+import javax.xml.transform.stream.StreamResult;
+import java.io.File;
+
+public class CCDAUpdater {
+    public static void main(String[] args) {
+        try {
+            // Load the XML file
+            File inputFile = new File("src/main/java/org/example/ccda.xml");
+            DocumentBuilderFactory dbFactory = DocumentBuilderFactory.newInstance();
+            DocumentBuilder dBuilder = dbFactory.newDocumentBuilder();
+            Document doc = dBuilder.parse(inputFile);
+
+            // Update patient's given name, last name, and date of birth
+            updatePatientInfo(doc, "John233", "Doe323", "19850adsa101");
+
+            // Save the modified XML to a new file
+            saveXML(doc, "src/main/java/org/example/output_v1.xml");
+
+            System.out.println("XML file updated successfully.");
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    private static void updatePatientInfo(Document doc, String givenName, String lastName, String dob) {
+        // Find the patient element
+        NodeList patientList = doc.getElementsByTagName("patient");
+        Element patient = (Element) patientList.item(0);
+
+        // Update the given name
+        NodeList givenList = patient.getElementsByTagName("given");
+        Element given = (Element) givenList.item(0);
+        given.setTextContent(givenName);
+
+        // Update the last name
+        NodeList familyList = patient.getElementsByTagName("family");
+        Element family = (Element) familyList.item(0);
+        family.setTextContent(lastName);
+
+        // Update the date of birth
+        Element birthTime = (Element) patient.getElementsByTagName("birthTime").item(0);
+        birthTime.setAttribute("value", dob);
+    }
+
+    private static void saveXML(Document doc, String outputPath) throws TransformerException {
+        TransformerFactory transformerFactory = TransformerFactory.newInstance();
+        Transformer transformer = transformerFactory.newTransformer();
+        DOMSource source = new DOMSource(doc);
+        StreamResult result = new StreamResult(new File(outputPath));
+        transformer.transform(source, result);
+    }
+}
+
