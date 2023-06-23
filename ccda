@@ -1,0 +1,32 @@
+import lxml.etree as ET
+
+def read_ccda_file(filename):
+    """Reads a ccda file and returns the root element of the XML tree."""
+    tree = ET.parse(filename)
+    root = tree.getroot()
+    return root
+
+def update_ccda_file(root, patient_id, document_id, given_name, family_name, date_of_birth):
+    """Updates the values of the patient ID, document ID, given name, family name, and date of birth in the ccda file."""
+    root.find('//id/@extension').text = patient_id
+    root.find('//id').text = document_id
+    root.find('//name[1]/given[1]').text = given_name
+    root.find('//name[1]/family[1]').text = family_name
+    root.find('//birthTime').text = date_of_birth
+
+def print_ccda_file(root):
+    """Prints the contents of the ccda file."""
+    print(ET.tostring(root, pretty_print=True))
+
+if __name__ == '__main__':
+    filename = 'ccda_file.xml'
+    root = read_ccda_file(filename)
+    patient_id = '1234567890'
+    document_id = '1234567890-1'
+    given_name = 'John'
+    family_name = 'Doe'
+    date_of_birth = '1970-01-01'
+    update_ccda_file(root, patient_id, document_id, given_name, family_name, date_of_birth)
+    print_ccda_file(root)
+pip install lxml
+python ccda_update.py
