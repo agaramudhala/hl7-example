@@ -1,0 +1,98 @@
+package org.example;
+
+import org.w3c.dom.Document;
+import org.w3c.dom.Node;
+import org.xml.sax.SAXException;
+
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.parsers.ParserConfigurationException;
+import javax.xml.transform.OutputKeys;
+import javax.xml.transform.Transformer;
+import javax.xml.transform.TransformerException;
+import javax.xml.transform.TransformerFactory;
+import javax.xml.transform.dom.DOMSource;
+import javax.xml.transform.stream.StreamResult;
+import javax.xml.xpath.*;
+import java.io.File;
+import java.io.IOException;
+
+public class CCDAUpdater_7 {
+    public static void main(String[] args) {
+        String filePath = "src/main/java/org/example/ccda.xml"; // Specify the path to your CCDA XML file
+
+        try {
+            // Read the XML file
+            DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
+            DocumentBuilder builder = factory.newDocumentBuilder();
+            Document document = builder.parse(new File(filePath));
+
+            // Update and print the requested values
+            String documentIdExtension = updateAndGetElementValue(document, "/ClinicalDocument/id/@extension");
+            String documentIdRoot = getElementValue(document, "/ClinicalDocument/id/@root");
+            String patientId = updateAndGetElementValue(document, "/ClinicalDocument/recordTarget/patientRole/id/@extension");
+            String patientGivenName = updateAndGetElementValue(document, "/ClinicalDocument/recordTarget/patientRole/patient/name[1]/given[1]");
+            String patientLastName = updateAndGetElementValue(document, "/ClinicalDocument/recordTarget/patientRole/patient/name[1]/family[1]");
+            String dateOfBirth = updateAndGetElementValue(document, "/ClinicalDocument/recordTarget/patientRole/patient/birthTime");
+
+            // Save the modified XML without altering attribute sorting
+            saveUpdatedXML(document, filePath);
+
+            // Print the values
+            System.out.println("Document ID extension: " + documentIdExtension);
+            System.out.println("Document ID root: " + documentIdRoot);
+            System.out.println("Patient ID: " + patientId);
+            System.out.println("Patient given name: " + patientGivenName);
+            System.out.println("Patient last name: " + patientLastName);
+            System.out.println("Date of birth: " + dateOfBirth);
+
+            System.out.println("CCDA XML file has been updated and values have been printed successfully.");
+        } catch (ParserConfigurationException | SAXException | IOException | TransformerException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private static String getElementValue(Document document, String xpathExpression) {
+        try {
+            XPathFactory xPathFactory = XPathFactory.newInstance();
+            XPath xpath = xPathFactory.newXPath();
+            XPathExpression expression = xpath.compile(xpathExpression);
+            Node node = (Node) expression.evaluate(document, XPathConstants.NODE);
+            return node != null ? node.getTextContent() : null;
+        } catch (XPathExpressionException e) {
+            e.printStackTrace();
+            return null;
+        }
+    }
+
+    private static String updateAndGetElementValue(Document document, String xpathExpression) {
+        try {
+            XPathFactory xPathFactory = XPathFactory.newInstance();
+            XPath xpath = xPathFactory.newXPath();
+            XPathExpression expression = xpath.compile(xpathExpression);
+            Node node = (Node) expression.evaluate(document, XPathConstants.NODE);
+            if (node != null) {
+                String updatedValue = "Updated Value"; // Replace with the desired updated value
+                node.setTextContent(updatedValue);
+                return updatedValue;
+            }
+        } catch (XPathExpressionException e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+
+    private static void saveUpdatedXML(Document document, String filePath) throws TransformerException {
+        // Prepare the XML file for saving
+        TransformerFactory transformerFactory = TransformerFactory.newInstance();
+        Transformer transformer = transformerFactory.newTransformer();
+        document.setXmlStandalone(true);
+        transformer.setOutputProperty(OutputKeys.INDENT, "no");
+        transformer.setOutputProperty("{http://xml.apache.org/xslt}indent-amount", "4");
+        DOMSource source = new DOMSource(document);
+
+        // Save the updated XML to the same file
+        StreamResult result = new StreamResult(new File(filePath));
+        transformer.transform(source, result);
+    }
+}
