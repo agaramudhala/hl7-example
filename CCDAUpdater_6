@@ -1,0 +1,67 @@
+package org.example;
+
+
+
+import org.w3c.dom.*;
+import javax.xml.parsers.*;
+import javax.xml.transform.*;
+import javax.xml.transform.dom.DOMSource;
+import javax.xml.transform.stream.StreamResult;
+import java.io.*;
+
+public class CCDAUpdater_6 {
+    public static void main(String[] args) {
+        try {
+            // Load the CCDA XML file
+            File xmlFile = new File("src/main/java/org/example/ccda.xml");
+            DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
+            DocumentBuilder builder = factory.newDocumentBuilder();
+            Document doc = builder.parse(xmlFile);
+
+            // Find the patient element
+            Element patientElement = (Element) doc.getElementsByTagName("patient").item(0);
+
+            // Update the values
+            updatePatientName(patientElement, "John", "Doe");
+            updatePatientDOB(patientElement, "19900101");
+
+            // Save the modified XML to a new file
+            saveUpdatedXML(doc, "src/main/java/org/example/ccda_updated.xml");
+            System.out.println("CCDA XML file updated successfully.");
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    private static void updatePatientName(Element patientElement, String givenName, String lastName) {
+        NodeList nameNodes = patientElement.getElementsByTagName("name");
+        Element nameElement = (Element) nameNodes.item(0);
+
+        NodeList givenNodes = nameElement.getElementsByTagName("given");
+        Element givenElement = (Element) givenNodes.item(0);
+        givenElement.setTextContent(givenName);
+
+        NodeList familyNodes = nameElement.getElementsByTagName("family");
+        Element familyElement = (Element) familyNodes.item(0);
+        familyElement.setTextContent(lastName);
+    }
+
+    private static void updatePatientDOB(Element patientElement, String dob) {
+        NodeList birthTimeNodes = patientElement.getElementsByTagName("birthTime");
+        Element birthTimeElement = (Element) birthTimeNodes.item(0);
+        birthTimeElement.setAttribute("value", dob);
+    }
+
+    private static void saveUpdatedXML(Document doc, String filePath) throws TransformerException {
+        TransformerFactory transformerFactory = TransformerFactory.newInstance();
+        Transformer transformer = transformerFactory.newTransformer();
+        transformer.setOutputProperty(OutputKeys.INDENT, "no");
+
+        doc.setXmlStandalone(true);
+
+        DOMSource source = new DOMSource(doc);
+        StreamResult result = new StreamResult(new File(filePath));
+        transformer.transform(source, result);
+    }
+}
